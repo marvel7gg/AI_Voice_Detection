@@ -41,7 +41,6 @@ Temporal structure
 
 Spectral consistency
 
-which improves detection of AI voices, especially re-recorded or mic-captured samples.
 
 ✅ Chunk-Level Processing
 
@@ -172,8 +171,6 @@ Designed to improve detection of:
 
 Multilingual speech
 
-Mic-recorded AI voices
-
 Low-quality compressed audio
 
 ⚡ Hardware Requirements
@@ -191,8 +188,6 @@ Embedding extraction is the most compute-intensive step.
 🔐 Notes
 
 Silence trimming is applied (top_db=25)
-
-No augmentation is applied in this version
 
 Training uses cached embeddings for speed
 
