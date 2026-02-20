@@ -1,0 +1,196 @@
+🎧 AI Voice Detector — Training Pipeline
+
+This repository contains the training pipeline for an AI vs Human speech classifier built using:
+
+Wav2Vec2 XLS-R (300M) for speech representation learning
+
+XGBoost for classification
+
+Large-scale multilingual speech datasets
+
+The model learns deep speech embeddings from raw audio and classifies whether a voice is Human or AI-Generated.
+
+🧠 Training Architecture
+Audio File
+   ↓
+Librosa Preprocessing
+   ↓
+2-sec Chunking
+   ↓
+Wav2Vec2 Middle Layer Embeddings
+   ↓
+Mean Pooling
+   ↓
+XGBoost Classifier
+   ↓
+Human / AI Prediction
+
+⚙️ Key Design Choices
+✅ Middle Layer Features
+
+Instead of the final transformer layer, we extract:
+
+hidden_states[8]
+
+
+This captures:
+
+Prosody
+
+Temporal structure
+
+Spectral consistency
+
+
+✅ Chunk-Level Processing
+
+Audio is split into 2-second chunks:
+
+Stabilizes embeddings
+
+Reduces noise sensitivity
+
+Improves generalization across datasets
+
+✅ Embedding Caching
+
+Embeddings are extracted once and saved as .npy files to avoid recomputing expensive Wav2Vec2 forward passes.
+
+embeddings/
+ ├── human/
+ └── ai/
+
+📂 Project Structure
+project/
+│
+├── dataset/
+│   └── train/
+│       ├── human/
+│       └── ai/
+│
+├── embeddings/
+│   ├── human/
+│   └── ai/
+│
+├── training_script.py
+└── ai_voice_detector_xgb_v2.pkl
+
+🛠️ Installation
+1️⃣ Create Virtual Environment
+python -m venv venv
+source venv/bin/activate
+
+2️⃣ Install Dependencies
+pip install torch transformers librosa soundfile xgboost scikit-learn tqdm joblib
+
+🚀 Training Steps
+Step 1 — Load Wav2Vec2
+
+The pipeline loads:
+
+facebook/wav2vec2-xls-r-300m
+
+
+with:
+
+output_hidden_states=True
+
+Step 2 — Extract Embeddings
+
+Run:
+
+process_folder("dataset/train/human", HUMAN_EMB)
+process_folder("dataset/train/ai", AI_EMB)
+
+
+This:
+
+Loads audio
+
+Trims silence
+
+Chunks audio
+
+Extracts embeddings
+
+Saves .npy cache
+
+⚠️ This step is GPU-heavy and runs only once.
+
+Step 3 — Train Model
+
+Embeddings are loaded and split:
+
+train_test_split(... stratify=y)
+
+
+XGBoost configuration:
+
+n_estimators=400
+max_depth=8
+learning_rate=0.05
+subsample=0.8
+colsample_bytree=0.8
+tree_method="hist"
+
+Step 4 — Evaluation
+
+Outputs:
+
+Classification report
+
+Confusion matrix
+
+Step 5 — Save Model
+ai_voice_detector_xgb_v2.pkl
+
+
+This model is later used in the FastAPI inference server.
+
+🧪 Inference Example
+print(predict_file("test/humanhg.wav"))
+
+
+Output:
+
+{
+  "prediction": "Human",
+  "confidence": 0.93,
+  "explanation": "Speech characteristics match natural human patterns."
+}
+
+📊 Dataset Composition (Example)
+
+The training data combines:
+
+Human speech (CommonVoice, OpenSLR, ASVSpoof bonafide)
+
+AI speech (EdgeTTS, ElevenLabs, Respeecher, ASVSpoof spoof)
+
+Designed to improve detection of:
+
+Multilingual speech
+
+Low-quality compressed audio
+
+⚡ Hardware Requirements
+
+Recommended:
+
+GPU: NVIDIA T4 / A10 / RTX 30xx
+
+RAM: 8GB+
+
+Storage: 20GB+
+
+Embedding extraction is the most compute-intensive step.
+
+🔐 Notes
+
+Silence trimming is applied (top_db=25)
+
+Training uses cached embeddings for speed
+
+📜 License
+
+MIT License
